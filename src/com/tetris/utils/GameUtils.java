@@ -1,11 +1,17 @@
 package com.tetris.utils;
 
+import java.util.Random;
+
 public class GameUtils {
-    /* yardımcı fonksiyonlar: Puan hesaplama, rastgele şekil üretme gibi ortak işlevler
+    private static Random random = new Random();
 
-       Tekrar kullanılabilir kod: Farklı sınıflarda kullanılacak metodlar
+    public static int getRandomInt(int min, int max){
+        return random.nextInt(max - min + 1) + min;
+    }
 
-       Düzenli yapı: Model/View/Controller dışındaki yardımcı kodları gruplamak*/
+    public static boolean isEven(int num) {
+        return num % 2 == 0;
+    }
 
 
 
