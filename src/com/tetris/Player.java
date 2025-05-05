@@ -4,6 +4,8 @@ import com.tetris.utils.GameUtils;
 import com.tetris.model.Tetromino;
 import com.tetris.model.GameBoard;
 
+import java.util.Set; // <-- Bunu eklediğimiz için hata giderildi
+
 public abstract class Player {
     private String name;
     private int score;
@@ -36,9 +38,7 @@ public abstract class Player {
             currentY++;
         } else {
             board.mergePiece(currentPiece, currentX, currentY);
-            int lines = board.clearLines();
-            score += lines * 100;
-            spawnNewPiece();
+            spawnNewPiece(); // Satır silme artık burada yok
         }
     }
 
@@ -60,11 +60,14 @@ public abstract class Player {
         if (gameOver) return;
         currentPiece.rotate();
         if (!board.isValidPosition(currentPiece, currentX, currentY)) {
-            // Rotate back (3 times to undo)
             currentPiece.rotate();
             currentPiece.rotate();
             currentPiece.rotate();
         }
+    }
+
+    public void addScore(int value) {
+        this.score += value;
     }
 
     public boolean isGameOver() {
@@ -94,6 +97,15 @@ public abstract class Player {
     public int getCurrentY() {
         return currentY;
     }
-    public abstract void handleKeyPress(int keyCode);
 
+    public int getGhostY() {
+        int ghostY = currentY;
+        while (board.isValidPosition(currentPiece, currentX, ghostY + 1)) {
+            ghostY++;
+        }
+        return ghostY;
+    }
+
+
+    public abstract void handleKeyPress(int keyCode);
 }

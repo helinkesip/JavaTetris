@@ -1,11 +1,8 @@
 package com.tetris.model;
-import com.tetris.model.GameBoard;
-import com.tetris.model.Tetromino;
-import com.tetris.utils.GameUtils;
 
 import java.util.Arrays;
-
-
+import java.util.HashSet;
+import java.util.Set;
 
 public class GameBoard {
     public static final int WIDTH = 10;
@@ -17,17 +14,15 @@ public class GameBoard {
         board = new int[HEIGHT][WIDTH];
     }
 
-    public boolean isValidPosition(Tetromino tetromino, int x, int y) {
+    public boolean isValidPosition(com.tetris.model.Tetromino tetromino, int x, int y) {
         int[][] shape = tetromino.getShape();
         for (int i = 0; i < shape.length; i++) {
             for (int j = 0; j < shape[i].length; j++) {
                 if (shape[i][j] != 0) {
                     int newX = x + j;
                     int newY = y + i;
-
                     if (newX < 0 || newX >= WIDTH || newY < 0 || newY >= HEIGHT)
                         return false;
-
                     if (board[newY][newX] != 0)
                         return false;
                 }
@@ -36,7 +31,7 @@ public class GameBoard {
         return true;
     }
 
-    public void mergePiece(Tetromino tetromino, int x, int y) {
+    public void mergePiece(com.tetris.model.Tetromino tetromino, int x, int y) {
         int[][] shape = tetromino.getShape();
         for (int i = 0; i < shape.length; i++) {
             for (int j = 0; j < shape[i].length; j++) {
@@ -47,8 +42,8 @@ public class GameBoard {
         }
     }
 
-    public int clearLines() {
-        int cleared = 0;
+    public Set<Integer> clearLines() {
+        Set<Integer> cleared = new HashSet<>();
         for (int row = HEIGHT - 1; row >= 0; row--) {
             boolean full = true;
             for (int col = 0; col < WIDTH; col++) {
@@ -57,14 +52,13 @@ public class GameBoard {
                     break;
                 }
             }
-
             if (full) {
+                cleared.add(row);
                 for (int i = row; i > 0; i--) {
                     board[i] = Arrays.copyOf(board[i - 1], WIDTH);
                 }
                 Arrays.fill(board[0], 0);
-                cleared++;
-                row++; // check same row again after shifting
+                row++;
             }
         }
         return cleared;

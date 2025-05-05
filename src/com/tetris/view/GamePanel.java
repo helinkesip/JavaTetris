@@ -1,18 +1,25 @@
-// GamePanel.java (fixed color indexing and ensured each shape has unique color)
 package com.tetris.view;
 
 import com.tetris.controller.GameEngine;
 import com.tetris.model.GameBoard;
 import com.tetris.model.Tetromino;
+import com.tetris.Player;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import com.tetris.Player;
+import java.util.HashSet;
+import java.util.Set;
 
 public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
     private GameEngine gameEngine;
     private Timer animationTimer;
+
+    private final Set<Integer> animatingRows = new HashSet<>();
+    private int animationStep = 0;
+    private final int ANIMATION_STEPS = 5;
+
     private final Color BACKGROUND_COLOR = new Color(30, 30, 30);
     private final Color PANEL_COLOR = new Color(50, 50, 50);
     private final Font SCORE_FONT = new Font("Verdana", Font.BOLD, 28);
@@ -42,14 +49,26 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         GameBoard board2 = new GameBoard();
 
         gameEngine = new GameEngine(board1, board2);
+        gameEngine.setGamePanel(this);
 
-        animationTimer = new Timer(500, this);
+        animationTimer = new Timer(120, this);
         animationTimer.start();
+    }
+
+    public void triggerRowAnimation(Set<Integer> rows) {
+        animatingRows.clear();
+        animatingRows.addAll(rows);
+        animationStep = 0;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        gameEngine.updateGame();
+        animationStep++;
+        if (animationStep >= ANIMATION_STEPS) {
+            animatingRows.clear();
+            animationStep = 0;
+            gameEngine.updateGame();
+        }
         repaint();
     }
 
@@ -98,8 +117,14 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         for (int row = 0; row < GameBoard.HEIGHT; row++) {
             for (int col = 0; col < GameBoard.WIDTH; col++) {
                 if (grid[row][col] != 0) {
+                    boolean isAnimating = animatingRows.contains(row);
+                    int alpha = isAnimating ? 255 - (animationStep * 50) : 255;
+                    alpha = Math.max(0, alpha);
+
                     int colorIndex = Math.floorMod(grid[row][col], TETROMINO_COLORS.length);
-                    g.setColor(TETROMINO_COLORS[colorIndex]);
+                    Color baseColor = TETROMINO_COLORS[colorIndex];
+                    Color faded = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha);
+                    g.setColor(faded);
                     g.fillRoundRect(offsetX + col * BLOCK_SIZE, BOARD_TOP_OFFSET + row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE, 10, 10);
                 }
             }
@@ -115,6 +140,20 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
                     break;
                 }
             }
+
+            // GHOST PARÇA ÇİZİMİ
+            int ghostY = player.getGhostY();
+            g.setColor(new Color(200, 200, 200, 60));
+            for (int i = 0; i < piece.getShape().length; i++) {
+                for (int j = 0; j < piece.getShape()[i].length; j++) {
+                    if (piece.getShape()[i][j] != 0) {
+                        int px = offsetX + (player.getCurrentX() + j) * BLOCK_SIZE;
+                        int py = BOARD_TOP_OFFSET + (ghostY + i) * BLOCK_SIZE;
+                        g.fillRoundRect(px, py, BLOCK_SIZE, BLOCK_SIZE, 10, 10);
+                    }
+                }
+            }
+
             Color drawColor = matchedIndex >= 0 ? TETROMINO_COLORS[matchedIndex] : pieceColor;
             g.setColor(drawColor);
 
