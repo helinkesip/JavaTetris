@@ -4,12 +4,13 @@ import com.tetris.utils.GameUtils;
 import com.tetris.model.Tetromino;
 import com.tetris.model.GameBoard;
 
-public class Player {
+public abstract class Player {
     private String name;
     private int score;
     private GameBoard board;
     private Tetromino currentPiece;
     private int currentX, currentY;
+    private boolean gameOver = false;
 
     public Player(String name, GameBoard board) {
         this.name = name;
@@ -25,10 +26,12 @@ public class Player {
 
         if (!board.isValidPosition(currentPiece, currentX, currentY)) {
             System.out.println("Game Over for " + name);
+            gameOver = true;
         }
     }
 
     public void movePieceDown() {
+        if (gameOver) return;
         if (board.isValidPosition(currentPiece, currentX, currentY + 1)) {
             currentY++;
         } else {
@@ -40,28 +43,32 @@ public class Player {
     }
 
     public void movePieceLeft() {
+        if (gameOver) return;
         if (board.isValidPosition(currentPiece, currentX - 1, currentY)) {
             currentX--;
         }
     }
 
     public void movePieceRight() {
+        if (gameOver) return;
         if (board.isValidPosition(currentPiece, currentX + 1, currentY)) {
             currentX++;
         }
     }
 
     public void rotatePiece() {
+        if (gameOver) return;
         currentPiece.rotate();
         if (!board.isValidPosition(currentPiece, currentX, currentY)) {
-            currentPiece.rotate(); // Undo rotation if invalid
+            // Rotate back (3 times to undo)
+            currentPiece.rotate();
             currentPiece.rotate();
             currentPiece.rotate();
         }
     }
 
-    public void handleKeyPress(int keyCode) {
-        // This method will be overridden in PlayerOne and PlayerTwo
+    public boolean isGameOver() {
+        return gameOver;
     }
 
     public String getName() {
@@ -87,4 +94,6 @@ public class Player {
     public int getCurrentY() {
         return currentY;
     }
+    public abstract void handleKeyPress(int keyCode);
+
 }

@@ -8,14 +8,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class GameEngine {
-
     private Player player1;
     private Player player2;
     private Timer timer;
 
     public GameEngine(GameBoard board1, GameBoard board2) {
-        this.player1 = new Player("Player 1", board1);
-        this.player2 = new Player("Player 2", board2);
+        this.player1 = new PlayerOne("Player 1", board1);
+        this.player2 = new PlayerTwo("Player 2", board2);
+
 
         timer = new Timer(500, new ActionListener() {
             @Override
@@ -27,8 +27,8 @@ public class GameEngine {
     }
 
     public void updateGame() {
-        player1.movePieceDown();
-        player2.movePieceDown();
+        if (!player1.isGameOver()) player1.movePieceDown();
+        if (!player2.isGameOver()) player2.movePieceDown();
     }
 
     public Player getPlayer1() {
