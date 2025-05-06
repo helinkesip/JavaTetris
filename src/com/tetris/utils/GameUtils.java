@@ -16,12 +16,22 @@ public class GameUtils {
     };
 
     private static final Color[] COLORS = {
-            Color.CYAN, Color.YELLOW, new Color(128, 0, 128), Color.ORANGE,
-            Color.BLUE, Color.GREEN, Color.RED
+            new Color(255, 170, 170), // I
+            new Color(255, 255, 170), // O
+            new Color(170, 255, 170), // T
+            new Color(170, 255, 255), // L
+            new Color(170, 170, 255), // J
+            new Color(255, 170, 255), // S
+            new Color(255, 210, 170)  // Z
     };
 
     public static Tetromino createRandomTetromino() {
-        int index = (int)(Math.random() * SHAPES.length);
-        return new Tetromino(SHAPES[index], COLORS[index]);
+        int index = (int)(Math.random() * Tetromino.SHAPES.length);
+        int[][] shape = Tetromino.SHAPES[index];
+        Color color = Tetromino.COLORS[index];
+        return new Tetromino(shape, color, index + 1); // id 1-7 arası olur
+
     }
+
+
 }

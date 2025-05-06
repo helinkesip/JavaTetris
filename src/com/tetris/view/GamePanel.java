@@ -26,15 +26,6 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
     private final Font LABEL_FONT = new Font("Verdana", Font.BOLD, 20);
     private final Font GAMEOVER_FONT = new Font("Verdana", Font.BOLD, 40);
     private final Color SCORE_COLOR = new Color(144, 238, 144);
-    private final Color[] TETROMINO_COLORS = {
-            new Color(255, 170, 170), // I
-            new Color(255, 255, 170), // O
-            new Color(170, 255, 170), // T
-            new Color(170, 255, 255), // L
-            new Color(170, 170, 255), // J
-            new Color(255, 170, 255), // S
-            new Color(255, 210, 170)  // Z
-    };
 
     private final int BLOCK_SIZE = 28;
     private final int BOARD_TOP_OFFSET = 90;
@@ -42,7 +33,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
     public GamePanel() {
         setFocusable(true);
-        setPreferredSize(new Dimension(BOARD_WIDTH * 2 + 20, BOARD_TOP_OFFSET + GameBoard.HEIGHT * BLOCK_SIZE));
+        setPreferredSize(new Dimension(BOARD_WIDTH * 2, BOARD_TOP_OFFSET + GameBoard.HEIGHT * BLOCK_SIZE));
         addKeyListener(this);
 
         GameBoard board1 = new GameBoard();
@@ -85,19 +76,19 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         g2d.fillRect(0, 0, getWidth(), getHeight());
 
         drawBoard(g2d, gameEngine.getPlayer1(), 0);
-        drawBoard(g2d, gameEngine.getPlayer2(), BOARD_WIDTH + 20);
+        drawBoard(g2d, gameEngine.getPlayer2(), BOARD_WIDTH);
 
         g2d.setColor(SCORE_COLOR);
         g2d.setFont(SCORE_FONT);
         g2d.drawString("P1 Skor: " + gameEngine.getPlayer1().getScore(), 10, 40);
-        g2d.drawString("P2 Skor: " + gameEngine.getPlayer2().getScore(), BOARD_WIDTH + 30, 40);
+        g2d.drawString("P2 Skor: " + gameEngine.getPlayer2().getScore(), BOARD_WIDTH + 10, 40);
 
         g2d.setFont(LABEL_FONT);
         g2d.drawString("OYUNCU 1", 10, 65);
-        g2d.drawString("OYUNCU 2", BOARD_WIDTH + 30, 65);
+        g2d.drawString("OYUNCU 2", BOARD_WIDTH + 10, 65);
 
         g2d.setColor(Color.GRAY);
-        g2d.fillRect(BOARD_WIDTH + 10, BOARD_TOP_OFFSET, 10, GameBoard.HEIGHT * BLOCK_SIZE);
+        g2d.fillRect(BOARD_WIDTH - 1, BOARD_TOP_OFFSET, 2, GameBoard.HEIGHT * BLOCK_SIZE);
 
         g2d.setColor(Color.RED);
         g2d.setFont(GAMEOVER_FONT);
@@ -107,7 +98,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
             g2d.drawString("GAME OVER", x, getHeight() / 2);
         }
         if (gameEngine.getPlayer2().isGameOver()) {
-            int x = BOARD_WIDTH + 20 + (BOARD_WIDTH - fm.stringWidth("GAME OVER")) / 2;
+            int x = BOARD_WIDTH + (BOARD_WIDTH - fm.stringWidth("GAME OVER")) / 2;
             g2d.drawString("GAME OVER", x, getHeight() / 2);
         }
     }
@@ -116,13 +107,12 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         int[][] grid = player.getBoard().getBoard();
         for (int row = 0; row < GameBoard.HEIGHT; row++) {
             for (int col = 0; col < GameBoard.WIDTH; col++) {
-                if (grid[row][col] != 0) {
+                if (grid[row][col] > 0) {
                     boolean isAnimating = animatingRows.contains(row);
                     int alpha = isAnimating ? 255 - (animationStep * 50) : 255;
                     alpha = Math.max(0, alpha);
 
-                    int colorIndex = Math.floorMod(grid[row][col], TETROMINO_COLORS.length);
-                    Color baseColor = TETROMINO_COLORS[colorIndex];
+                    Color baseColor = Tetromino.getColorById(grid[row][col]);
                     Color faded = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha);
                     g.setColor(faded);
                     g.fillRoundRect(offsetX + col * BLOCK_SIZE, BOARD_TOP_OFFSET + row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE, 10, 10);
@@ -132,16 +122,6 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
         if (!player.isGameOver()) {
             Tetromino piece = player.getCurrentPiece();
-            Color pieceColor = piece.getColor();
-            int matchedIndex = -1;
-            for (int i = 0; i < TETROMINO_COLORS.length; i++) {
-                if (TETROMINO_COLORS[i].equals(pieceColor)) {
-                    matchedIndex = i;
-                    break;
-                }
-            }
-
-            // GHOST PARÇA ÇİZİMİ
             int ghostY = player.getGhostY();
             g.setColor(new Color(200, 200, 200, 60));
             for (int i = 0; i < piece.getShape().length; i++) {
@@ -154,7 +134,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
                 }
             }
 
-            Color drawColor = matchedIndex >= 0 ? TETROMINO_COLORS[matchedIndex] : pieceColor;
+            Color drawColor = piece.getColor();
             g.setColor(drawColor);
 
             for (int i = 0; i < piece.getShape().length; i++) {

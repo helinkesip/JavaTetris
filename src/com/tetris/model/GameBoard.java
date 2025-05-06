@@ -14,7 +14,7 @@ public class GameBoard {
         board = new int[HEIGHT][WIDTH];
     }
 
-    public boolean isValidPosition(com.tetris.model.Tetromino tetromino, int x, int y) {
+    public boolean isValidPosition(Tetromino tetromino, int x, int y) {
         int[][] shape = tetromino.getShape();
         for (int i = 0; i < shape.length; i++) {
             for (int j = 0; j < shape[i].length; j++) {
@@ -31,16 +31,22 @@ public class GameBoard {
         return true;
     }
 
-    public void mergePiece(com.tetris.model.Tetromino tetromino, int x, int y) {
+    public void mergePiece(Tetromino tetromino, int x, int y) {
         int[][] shape = tetromino.getShape();
+        int id = tetromino.getId(); // sabit renk için id
         for (int i = 0; i < shape.length; i++) {
             for (int j = 0; j < shape[i].length; j++) {
                 if (shape[i][j] != 0) {
-                    board[y + i][x + j] = tetromino.getColor().getRGB();
+                    int boardY = y + i;
+                    int boardX = x + j;
+                    if (boardY >= 0 && boardY < HEIGHT && boardX >= 0 && boardX < WIDTH) {
+                        board[boardY][boardX] = id;
+                    }
                 }
             }
         }
     }
+
 
     public Set<Integer> clearLines() {
         Set<Integer> cleared = new HashSet<>();
@@ -71,6 +77,7 @@ public class GameBoard {
     public int getWidth() {
         return WIDTH;
     }
+
 
     public int getHeight() {
         return HEIGHT;
