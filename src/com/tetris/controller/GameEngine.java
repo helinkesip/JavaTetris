@@ -13,9 +13,14 @@ public class GameEngine {
     private Player player2;
     private GamePanel panel;
 
-    public GameEngine(GameBoard board1, GameBoard board2) {
-        this.player1 = new PlayerOne("Player 1", board1);
-        this.player2 = new PlayerTwo("Player 2", board2);
+    public GameEngine(Player player1, Player player2) {
+        this.player1 = player1;
+        this.player2 = player2;
+    }
+
+    public void setPlayerNames(String name1, String name2) {
+        this.player1.setName(name1);
+        this.player2.setName(name2);
     }
 
     public void setGamePanel(GamePanel panel) {
@@ -25,11 +30,9 @@ public class GameEngine {
     public void updateGame() {
         Player[] players = { player1, player2 };
         for (Player player : players) {
-            player.movePieceDown(); // Tetrominoyu indirir ve gerekiyorsa yerleştirir
-            Set<Integer> cleared = player.getBoard().clearLines(); // Satır silme
-            player.addScore(cleared.size() * 100); // Skor artırma
-
-            // Animasyonu tetikle
+            player.movePieceDown();
+            Set<Integer> cleared = player.getBoard().clearLines();
+            player.addScore(cleared.size() * 100);
             if (!cleared.isEmpty() && panel != null) {
                 panel.triggerRowAnimation(cleared);
             }

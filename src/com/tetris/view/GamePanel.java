@@ -1,6 +1,5 @@
 package com.tetris.view;
 import javax.sound.sampled.*;
-import java.io.InputStream;
 import java.net.URL;
 import com.tetris.controller.GameEngine;
 import com.tetris.model.GameBoard;
@@ -15,8 +14,15 @@ import java.util.Set;
 
 public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
+
     private GameEngine gameEngine;
     private Timer animationTimer;
+
+    private final Player player1;
+    private final Player player2;
+
+    private boolean gameEnded = false;
+    private String winnerText = "";
 
     private final Set<Integer> animatingRows = new HashSet<>();
     private int animationStep = 0;
@@ -37,7 +43,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
     private JButton restartButton;
 
-    public GamePanel() {
+    public GamePanel(String player1Name, String player2Name) {
         setFocusable(true);
         int totalWidth = BOARD_WIDTH * 2 + MARGIN * 3 + PREVIEW_BOX_WIDTH * 2;
         int totalHeight = BOARD_TOP_OFFSET + BOARD_HEIGHT + MARGIN + 60;
@@ -47,16 +53,19 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         GameBoard board1 = new GameBoard();
         GameBoard board2 = new GameBoard();
 
-        gameEngine = new GameEngine(board1, board2);
+        this.player1 = new com.tetris.controller.PlayerOne(player1Name, board1);
+        this.player2 = new com.tetris.controller.PlayerTwo(player2Name, board2);
+
+        gameEngine = new GameEngine(player1, player2); // constructor'ı da güncellemen gerekebilir
         gameEngine.setGamePanel(this);
-        playGameMusic();
+
 
         animationTimer = new Timer(120, this);
         animationTimer.start();
 
         restartButton = new JButton("Yeniden Oyna");
         restartButton.setFont(new Font("Verdana", Font.BOLD, 16));
-        restartButton.setBackground(new Color(255, 100, 100));
+        restartButton.setBackground(new Color(150, 150, 150));
         restartButton.setForeground(Color.WHITE);
         restartButton.setFocusPainted(false);
         restartButton.setVisible(false);
@@ -74,14 +83,23 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
     }
 
     public void restartGame() {
+        gameEnded = false;
+        winnerText = "";
+
         GameBoard board1 = new GameBoard();
         GameBoard board2 = new GameBoard();
-        gameEngine = new GameEngine(board1, board2);
+
+        Player player1 = new com.tetris.controller.PlayerOne(this.player1.getName(), board1);
+        Player player2 = new com.tetris.controller.PlayerTwo(this.player2.getName(), board2);
+
+        gameEngine = new GameEngine(player1, player2);
         gameEngine.setGamePanel(this);
+
         restartButton.setVisible(false);
         requestFocusInWindow();
         repaint();
     }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -109,54 +127,47 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         drawFramedBoard(g2d, gameEngine.getPlayer1(), player1X);
         drawFramedBoard(g2d, gameEngine.getPlayer2(), player2X);
 
-        // Draw next boxes
         drawNextPiece(g2d, gameEngine.getPlayer1().getNextPiece(), player1X - PREVIEW_BOX_WIDTH - 10, BOARD_TOP_OFFSET);
         drawNextPiece(g2d, gameEngine.getPlayer2().getNextPiece(), player2X + BOARD_WIDTH + 10, BOARD_TOP_OFFSET);
-
-        if (gameEngine.getPlayer1().isGameOver()) {
-            g2d.setColor(Color.RED);
-            g2d.setFont(GAMEOVER_FONT);
-            g2d.drawString("GAME OVER", player1X + 20, getHeight() / 2);
-        }
-        if (gameEngine.getPlayer2().isGameOver()) {
-            g2d.setColor(Color.RED);
-            g2d.setFont(GAMEOVER_FONT);
-            g2d.drawString("GAME OVER", player2X + 20, getHeight() / 2);
-        }
 
         int buttonX = (getWidth() - restartButton.getWidth()) / 2;
         int buttonY = getHeight() - restartButton.getHeight() - 10;
         restartButton.setLocation(buttonX, buttonY);
         restartButton.setVisible(gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver());
-    }
 
-    private Clip gameMusicClip;
-    private Clip gameOverClip;
+        if ((gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver()) && !gameEnded) {
+            gameEnded = true;
 
-    private void playGameMusic() {
-        try {
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource("/sounds/game_music.wav"));
-            gameMusicClip = AudioSystem.getClip();
-            gameMusicClip.open(audioIn);
-            gameMusicClip.loop(Clip.LOOP_CONTINUOUSLY); // sonsuz döngü
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void playGameOverSound() {
-        try {
-            if (gameMusicClip != null && gameMusicClip.isRunning()) {
-                gameMusicClip.stop(); // müziği durdur
+            if (gameEngine.getPlayer1().getScore() > gameEngine.getPlayer2().getScore()) {
+                winnerText = gameEngine.getPlayer1().getName() + " Wins!";
+            } else if (gameEngine.getPlayer2().getScore() > gameEngine.getPlayer1().getScore()) {
+                winnerText = gameEngine.getPlayer2().getName() + " Wins!";
+            } else {
+                winnerText = "It's a Tie!";
             }
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource("/sounds/wahwah.wav"));
-            gameOverClip = AudioSystem.getClip();
-            gameOverClip.open(audioIn);
-            gameOverClip.start(); // tek seferlik çal
-        } catch (Exception e) {
-            e.printStackTrace();
+        }
+
+        if (gameEnded) {
+            g2d.setColor(Color.YELLOW);
+            g2d.setFont(new Font("Verdana", Font.BOLD, 32));
+            int textWidth = g2d.getFontMetrics().stringWidth(winnerText);
+            g2d.drawString(winnerText, (getWidth() - textWidth) / 2, getHeight() / 2 + 40);
+
+            // Konfetti animasyonu
+            for (int i = 0; i < 150; i++) {
+                int x = (int)(Math.random() * getWidth());
+                int y = (int)(Math.random() * getHeight());
+                int size = 4 + (int)(Math.random() * 6);
+                g2d.setColor(new Color(
+                        (int)(Math.random() * 255),
+                        (int)(Math.random() * 255),
+                        (int)(Math.random() * 255)
+                ));
+                g2d.fillOval(x, y, size, size);
+            }
         }
     }
+
 
 
 
@@ -271,4 +282,6 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
     @Override public void keyTyped(KeyEvent e) {}
     @Override public void keyReleased(KeyEvent e) {}
+
+
 }

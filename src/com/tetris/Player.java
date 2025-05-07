@@ -23,21 +23,24 @@ public abstract class Player {
         spawnNewPiece();
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public void spawnNewPiece() {
         currentPiece = nextPiece;
         nextPiece = GameUtils.createRandomTetromino();
 
-        // Özel tetromino spawn konumları
         switch(currentPiece.getId()) {
-            case 0: // I tetromino (4x1)
-                currentX = board.getWidth() / 2 - 2; // Ortalamak için -2
+            case 0:
+                currentX = board.getWidth() / 2 - 2;
                 currentY = 0;
                 break;
-            case 1: // O tetromino (2x2)
-                currentX = board.getWidth() / 2 - 1; // Ortalamak için -1
+            case 1:
+                currentX = board.getWidth() / 2 - 1;
                 currentY = 0;
                 break;
-            default: // Diğer tetrominolar
+            default:
                 currentX = board.getWidth() / 2 - currentPiece.getShape()[0].length / 2;
                 currentY = 0;
         }
@@ -74,22 +77,16 @@ public abstract class Player {
 
     public void rotatePiece() {
         if (gameOver) return;
-
-        // Mevcut rotasyonu geçici olarak uygula
         currentPiece.rotate();
 
-        // Eğer yeni pozisyon geçersizse, rotasyonu geri al
         if (!board.isValidPosition(currentPiece, currentX, currentY)) {
-            // I Tetrominosu için özel düzeltme (kenara yapışmasın)
             if (currentPiece.getId() == 0) {
                 int newX = currentX;
 
-                // Sola taşı (sağa kaymışsa)
                 while (!board.isValidPosition(currentPiece, newX, currentY) && newX > 0) {
                     newX--;
                 }
 
-                // Sağa taşı (sola kaymışsa)
                 if (!board.isValidPosition(currentPiece, newX, currentY)) {
                     newX = currentX;
                     while (!board.isValidPosition(currentPiece, newX, currentY) && newX < board.getWidth() - currentPiece.getShape()[0].length) {
@@ -98,21 +95,20 @@ public abstract class Player {
                 }
 
                 if (board.isValidPosition(currentPiece, newX, currentY)) {
-                    currentX = newX; // Geçerli bir pozisyon bulundu
+                    currentX = newX;
                 } else {
-                    // Rotasyon mümkün değil, eski haline dön
                     currentPiece.rotate();
                     currentPiece.rotate();
                     currentPiece.rotate();
                 }
             } else {
-                // Diğer tetrominolar için normal davranış
                 currentPiece.rotate();
                 currentPiece.rotate();
                 currentPiece.rotate();
             }
         }
     }
+
     public boolean isValidPosition(Tetromino piece, int x, int y) {
         int[][] shape = piece.getShape();
         for (int i = 0; i < shape.length; i++) {
@@ -133,7 +129,6 @@ public abstract class Player {
         }
         return true;
     }
-
 
     public void addScore(int value) {
         this.score += value;
