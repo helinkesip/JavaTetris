@@ -1,14 +1,25 @@
 package com.tetris.view;
-import javax.sound.sampled.*;
-import java.net.URL;
+
+import com.tetris.Player;
 import com.tetris.controller.GameEngine;
+import com.tetris.controller.PlayerOne;
+import com.tetris.controller.PlayerTwo;
 import com.tetris.model.GameBoard;
 import com.tetris.model.Tetromino;
-import com.tetris.Player;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.Timer;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,7 +27,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
 
     private GameEngine gameEngine;
-    private Timer animationTimer;
+    private final Timer animationTimer;
 
     private final Player player1;
     private final Player player2;
@@ -41,7 +52,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
     private final int PREVIEW_BOX_WIDTH = PREVIEW_BLOCK_SIZE * 5;
     private final int PREVIEW_BOX_HEIGHT = PREVIEW_BLOCK_SIZE * 4;
 
-    private JButton restartButton;
+    private final JButton restartButton;
 
     public GamePanel(String player1Name, String player2Name) {
         setFocusable(true);
@@ -53,10 +64,10 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         GameBoard board1 = new GameBoard();
         GameBoard board2 = new GameBoard();
 
-        this.player1 = new com.tetris.controller.PlayerOne(player1Name, board1);
-        this.player2 = new com.tetris.controller.PlayerTwo(player2Name, board2);
+        this.player1 = new PlayerOne(player1Name, board1);
+        this.player2 = new PlayerTwo(player2Name, board2);
 
-        gameEngine = new GameEngine(player1, player2); // constructor'ı da güncellemen gerekebilir
+        gameEngine = new GameEngine(player1, player2);
         gameEngine.setGamePanel(this);
 
 
@@ -85,12 +96,12 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
     public void restartGame() {
         gameEnded = false;
         winnerText = "";
-
+        stopMusicIfEngineIsValid();
         GameBoard board1 = new GameBoard();
         GameBoard board2 = new GameBoard();
 
-        Player player1 = new com.tetris.controller.PlayerOne(this.player1.getName(), board1);
-        Player player2 = new com.tetris.controller.PlayerTwo(this.player2.getName(), board2);
+        Player player1 = new PlayerOne(this.player1.getName(), board1);
+        Player player2 = new PlayerTwo(this.player2.getName(), board2);
 
         gameEngine = new GameEngine(player1, player2);
         gameEngine.setGamePanel(this);
@@ -98,6 +109,13 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         restartButton.setVisible(false);
         requestFocusInWindow();
         repaint();
+    }
+
+    private void stopMusicIfEngineIsValid() {
+        if (gameEngine != null) {
+            gameEngine.getPlayer1().stopMusic();
+            gameEngine.getPlayer2().stopMusic();
+        }
     }
 
 
@@ -155,20 +173,18 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
             // Konfetti animasyonu
             for (int i = 0; i < 150; i++) {
-                int x = (int)(Math.random() * getWidth());
-                int y = (int)(Math.random() * getHeight());
-                int size = 4 + (int)(Math.random() * 6);
+                int x = (int) (Math.random() * getWidth());
+                int y = (int) (Math.random() * getHeight());
+                int size = 4 + (int) (Math.random() * 6);
                 g2d.setColor(new Color(
-                        (int)(Math.random() * 255),
-                        (int)(Math.random() * 255),
-                        (int)(Math.random() * 255)
+                        (int) (Math.random() * 255),
+                        (int) (Math.random() * 255),
+                        (int) (Math.random() * 255)
                 ));
                 g2d.fillOval(x, y, size, size);
             }
         }
     }
-
-
 
 
     private void drawNextPiece(Graphics2D g, Tetromino piece, int x, int y) {
@@ -262,7 +278,8 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         }
     }
 
-    @Override public void keyPressed(KeyEvent e) {
+    @Override
+    public void keyPressed(KeyEvent e) {
         if (gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver()) return;
 
         int key = e.getKeyCode();
@@ -280,8 +297,13 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         repaint();
     }
 
-    @Override public void keyTyped(KeyEvent e) {}
-    @Override public void keyReleased(KeyEvent e) {}
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+    }
 
 
 }

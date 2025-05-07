@@ -16,11 +16,8 @@ public class GameEngine {
     public GameEngine(Player player1, Player player2) {
         this.player1 = player1;
         this.player2 = player2;
-    }
-
-    public void setPlayerNames(String name1, String name2) {
-        this.player1.setName(name1);
-        this.player2.setName(name2);
+        player1.setOtherPlayer(player2);
+        player2.setOtherPlayer(player1);
     }
 
     public void setGamePanel(GamePanel panel) {

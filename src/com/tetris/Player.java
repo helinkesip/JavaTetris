@@ -6,14 +6,14 @@ import com.tetris.utils.GameUtils;
 import com.tetris.utils.MusicPlayer;
 
 public abstract class Player {
-    private String name;
+    private final String name;
     private int score;
-    private GameBoard board;
+    private final GameBoard board;
     private Tetromino currentPiece;
     private Tetromino nextPiece;
     private int currentX, currentY;
     private boolean gameOver = false;
-    private MusicPlayer musicPlayer;
+    private final MusicPlayer musicPlayer;
     private Player otherPlayer; // Diğer oyuncuyu tutacak
 
     public Player(String name, GameBoard board) {
@@ -22,12 +22,9 @@ public abstract class Player {
         this.score = 0;
         this.nextPiece = GameUtils.createRandomTetromino();
         this.musicPlayer = new MusicPlayer();
-        this.musicPlayer.playMusic("game-music.wav"); // 🎵 Müzik başlat
+        this.musicPlayer.stopMusic();
+        this.musicPlayer.playMusic("game-music.wav");
         spawnNewPiece();
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public void spawnNewPiece() {
@@ -51,8 +48,8 @@ public abstract class Player {
         if (!board.isValidPosition(currentPiece, currentX, currentY)) {
             System.out.println("Game Over for " + name);
             gameOver = true;
-            musicPlayer.stopMusic(); // ❌ Oyun bittiğinde müziği durdur
-            checkGameOverOrTie(); // Game over ya da tie durumu kontrolü
+            musicPlayer.stopMusic();
+            checkGameOverOrTie();
         }
     }
 
@@ -136,12 +133,22 @@ public abstract class Player {
         return true;
     }
 
+    public void setOtherPlayer(Player otherPlayer) {
+        this.otherPlayer = otherPlayer;
+    }
+
+    public void stopMusic() {
+        if (musicPlayer != null) {
+            musicPlayer.stopMusic();
+        }
+    }
+
     public void addScore(int value) {
         this.score += value;
     }
 
     public boolean isGameOver() {
-        return gameOver;
+        return this.gameOver;
     }
 
     public String getName() {
@@ -182,25 +189,26 @@ public abstract class Player {
 
     // Müzik geçişlerini kontrol et
     public void checkGameOverOrTie() {
-        // Eğer her iki oyuncu da game over durumu yaşıyorsa:
-        if (otherPlayer != null && isGameOver() && otherPlayer.isGameOver()) {
+        // Eğer diğer oyuncu henüz ayarlanmamışsa, bekle
+        if (otherPlayer == null) {
+            System.err.println("Bekleyen diğer oyuncu yok. Oyun sonu veya beraberlik kontrolü atlandı.");
+            return;
+        }
+        if (isGameOver() && otherPlayer.isGameOver()) {
             // Skorları karşılaştır
             if (this.getScore() == otherPlayer.getScore()) {
                 // Beraberlik durumu
-                musicPlayer.stopMusic(); // Mevcut müziği durdur
-                musicPlayer.playMusic("game-over-tie.wav"); // Beraberlik müziği çal
+                musicPlayer.stopMusic();
+                musicPlayer.playMusic("game-over-tie.wav");
             } else {
                 // Kazanan oyuncu
                 musicPlayer.stopMusic();
-                musicPlayer.playMusic("game-over.wav"); // Klasik game over müziği çal
+                musicPlayer.playMusic("game-win.wav");
             }
         }
-    }
 
-    // Diğer oyuncuyu set et
-    public void setOtherPlayer(Player otherPlayer) {
-        this.otherPlayer = otherPlayer;
     }
 
     public abstract void handleKeyPress(int keyCode);
+
 }
