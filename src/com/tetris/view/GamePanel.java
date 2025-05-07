@@ -1,5 +1,7 @@
 package com.tetris.view;
-
+import javax.sound.sampled.*;
+import java.io.InputStream;
+import java.net.URL;
 import com.tetris.controller.GameEngine;
 import com.tetris.model.GameBoard;
 import com.tetris.model.Tetromino;
@@ -20,20 +22,26 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
     private int animationStep = 0;
     private final int ANIMATION_STEPS = 5;
 
-    private final Color BACKGROUND_COLOR = new Color(30, 30, 30);
-    private final Color PANEL_COLOR = new Color(50, 50, 50);
-    private final Font SCORE_FONT = new Font("Verdana", Font.BOLD, 28);
-    private final Font LABEL_FONT = new Font("Verdana", Font.BOLD, 20);
-    private final Font GAMEOVER_FONT = new Font("Verdana", Font.BOLD, 40);
-    private final Color SCORE_COLOR = new Color(144, 238, 144);
+    private final Font SCORE_FONT = new Font("Consolas", Font.BOLD, 18);
+    private final Font GAMEOVER_FONT = new Font("Consolas", Font.BOLD, 28);
 
-    private final int BLOCK_SIZE = 28;
-    private final int BOARD_TOP_OFFSET = 90;
+    private final int BLOCK_SIZE = 24;
+    private final int BOARD_TOP_OFFSET = 100;
     private final int BOARD_WIDTH = GameBoard.WIDTH * BLOCK_SIZE;
+    private final int BOARD_HEIGHT = GameBoard.HEIGHT * BLOCK_SIZE;
+    private final int MARGIN = 30;
+
+    private final int PREVIEW_BLOCK_SIZE = 18;
+    private final int PREVIEW_BOX_WIDTH = PREVIEW_BLOCK_SIZE * 5;
+    private final int PREVIEW_BOX_HEIGHT = PREVIEW_BLOCK_SIZE * 4;
+
+    private JButton restartButton;
 
     public GamePanel() {
         setFocusable(true);
-        setPreferredSize(new Dimension(BOARD_WIDTH * 2, BOARD_TOP_OFFSET + GameBoard.HEIGHT * BLOCK_SIZE));
+        int totalWidth = BOARD_WIDTH * 2 + MARGIN * 3 + PREVIEW_BOX_WIDTH * 2;
+        int totalHeight = BOARD_TOP_OFFSET + BOARD_HEIGHT + MARGIN + 60;
+        setPreferredSize(new Dimension(totalWidth, totalHeight));
         addKeyListener(this);
 
         GameBoard board1 = new GameBoard();
@@ -41,15 +49,38 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
         gameEngine = new GameEngine(board1, board2);
         gameEngine.setGamePanel(this);
+        playGameMusic();
 
         animationTimer = new Timer(120, this);
         animationTimer.start();
+
+        restartButton = new JButton("Yeniden Oyna");
+        restartButton.setFont(new Font("Verdana", Font.BOLD, 16));
+        restartButton.setBackground(new Color(255, 100, 100));
+        restartButton.setForeground(Color.WHITE);
+        restartButton.setFocusPainted(false);
+        restartButton.setVisible(false);
+        restartButton.setSize(180, 45);
+        restartButton.addActionListener(e -> restartGame());
+
+        setLayout(null);
+        add(restartButton);
     }
 
     public void triggerRowAnimation(Set<Integer> rows) {
         animatingRows.clear();
         animatingRows.addAll(rows);
         animationStep = 0;
+    }
+
+    public void restartGame() {
+        GameBoard board1 = new GameBoard();
+        GameBoard board2 = new GameBoard();
+        gameEngine = new GameEngine(board1, board2);
+        gameEngine.setGamePanel(this);
+        restartButton.setVisible(false);
+        requestFocusInWindow();
+        repaint();
     }
 
     @Override
@@ -68,43 +99,116 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        g2d.setColor(BACKGROUND_COLOR);
+        g2d.setColor(Color.BLACK);
         g2d.fillRect(0, 0, getWidth(), getHeight());
 
-        g2d.setColor(PANEL_COLOR);
-        g2d.fillRect(0, 0, getWidth(), getHeight());
+        int centerX = getWidth() / 2;
+        int player1X = centerX - BOARD_WIDTH - MARGIN / 2;
+        int player2X = centerX + MARGIN / 2;
 
-        drawBoard(g2d, gameEngine.getPlayer1(), 0);
-        drawBoard(g2d, gameEngine.getPlayer2(), BOARD_WIDTH);
+        drawFramedBoard(g2d, gameEngine.getPlayer1(), player1X);
+        drawFramedBoard(g2d, gameEngine.getPlayer2(), player2X);
 
-        g2d.setColor(SCORE_COLOR);
-        g2d.setFont(SCORE_FONT);
-        g2d.drawString("P1 Skor: " + gameEngine.getPlayer1().getScore(), 10, 40);
-        g2d.drawString("P2 Skor: " + gameEngine.getPlayer2().getScore(), BOARD_WIDTH + 10, 40);
+        // Draw next boxes
+        drawNextPiece(g2d, gameEngine.getPlayer1().getNextPiece(), player1X - PREVIEW_BOX_WIDTH - 10, BOARD_TOP_OFFSET);
+        drawNextPiece(g2d, gameEngine.getPlayer2().getNextPiece(), player2X + BOARD_WIDTH + 10, BOARD_TOP_OFFSET);
 
-        g2d.setFont(LABEL_FONT);
-        g2d.drawString("OYUNCU 1", 10, 65);
-        g2d.drawString("OYUNCU 2", BOARD_WIDTH + 10, 65);
-
-        g2d.setColor(Color.GRAY);
-        g2d.fillRect(BOARD_WIDTH - 1, BOARD_TOP_OFFSET, 2, GameBoard.HEIGHT * BLOCK_SIZE);
-
-        g2d.setColor(Color.RED);
-        g2d.setFont(GAMEOVER_FONT);
-        FontMetrics fm = g2d.getFontMetrics(GAMEOVER_FONT);
         if (gameEngine.getPlayer1().isGameOver()) {
-            int x = (BOARD_WIDTH - fm.stringWidth("GAME OVER")) / 2;
-            g2d.drawString("GAME OVER", x, getHeight() / 2);
+            g2d.setColor(Color.RED);
+            g2d.setFont(GAMEOVER_FONT);
+            g2d.drawString("GAME OVER", player1X + 20, getHeight() / 2);
         }
         if (gameEngine.getPlayer2().isGameOver()) {
-            int x = BOARD_WIDTH + (BOARD_WIDTH - fm.stringWidth("GAME OVER")) / 2;
-            g2d.drawString("GAME OVER", x, getHeight() / 2);
+            g2d.setColor(Color.RED);
+            g2d.setFont(GAMEOVER_FONT);
+            g2d.drawString("GAME OVER", player2X + 20, getHeight() / 2);
         }
+
+        int buttonX = (getWidth() - restartButton.getWidth()) / 2;
+        int buttonY = getHeight() - restartButton.getHeight() - 10;
+        restartButton.setLocation(buttonX, buttonY);
+        restartButton.setVisible(gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver());
+    }
+
+    private Clip gameMusicClip;
+    private Clip gameOverClip;
+
+    private void playGameMusic() {
+        try {
+            AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource("/sounds/game_music.wav"));
+            gameMusicClip = AudioSystem.getClip();
+            gameMusicClip.open(audioIn);
+            gameMusicClip.loop(Clip.LOOP_CONTINUOUSLY); // sonsuz döngü
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void playGameOverSound() {
+        try {
+            if (gameMusicClip != null && gameMusicClip.isRunning()) {
+                gameMusicClip.stop(); // müziği durdur
+            }
+            AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource("/sounds/wahwah.wav"));
+            gameOverClip = AudioSystem.getClip();
+            gameOverClip.open(audioIn);
+            gameOverClip.start(); // tek seferlik çal
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private void drawNextPiece(Graphics2D g, Tetromino piece, int x, int y) {
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Consolas", Font.BOLD, 14));
+        g.drawString("Next", x + 10, y - 10);
+
+        g.setColor(new Color(60, 60, 60));
+        g.fillRoundRect(x, y, PREVIEW_BOX_WIDTH, PREVIEW_BOX_HEIGHT, 12, 12);
+
+        if (piece == null) return;
+
+        int[][] shape = piece.getShape();
+        int shapeWidth = shape[0].length;
+        int shapeHeight = shape.length;
+
+        int offsetX = (PREVIEW_BOX_WIDTH - shapeWidth * PREVIEW_BLOCK_SIZE) / 2;
+        int offsetY = (PREVIEW_BOX_HEIGHT - shapeHeight * PREVIEW_BLOCK_SIZE) / 2;
+
+        g.setColor(piece.getColor());
+        for (int i = 0; i < shapeHeight; i++) {
+            for (int j = 0; j < shapeWidth; j++) {
+                if (shape[i][j] != 0) {
+                    int px = x + offsetX + j * PREVIEW_BLOCK_SIZE;
+                    int py = y + offsetY + i * PREVIEW_BLOCK_SIZE;
+                    g.fillRoundRect(px, py, PREVIEW_BLOCK_SIZE, PREVIEW_BLOCK_SIZE, 6, 6);
+                }
+            }
+        }
+    }
+
+    private void drawFramedBoard(Graphics2D g, Player player, int offsetX) {
+        g.setColor(new Color(100, 100, 100));
+        g.fillRoundRect(offsetX - 8, BOARD_TOP_OFFSET - 50, BOARD_WIDTH + 16, BOARD_HEIGHT + 60, 20, 20);
+
+        g.setColor(new Color(60, 60, 60));
+        g.fillRoundRect(offsetX - 4, BOARD_TOP_OFFSET - 42, BOARD_WIDTH + 8, 36, 15, 15);
+
+        g.setColor(Color.WHITE);
+        g.setFont(SCORE_FONT);
+        g.drawString(player.getName() + ": " + player.getScore(), offsetX + 8, BOARD_TOP_OFFSET - 20);
+
+        drawBoard(g, player, offsetX);
     }
 
     private void drawBoard(Graphics g, Player player, int offsetX) {
         int[][] grid = player.getBoard().getBoard();
+
+        g.setColor(new Color(20, 20, 20, 160));
+        g.fillRect(offsetX, BOARD_TOP_OFFSET, BOARD_WIDTH, BOARD_HEIGHT);
+
         for (int row = 0; row < GameBoard.HEIGHT; row++) {
             for (int col = 0; col < GameBoard.WIDTH; col++) {
                 if (grid[row][col] > 0) {
@@ -115,7 +219,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
                     Color baseColor = Tetromino.getColorById(grid[row][col]);
                     Color faded = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha);
                     g.setColor(faded);
-                    g.fillRoundRect(offsetX + col * BLOCK_SIZE, BOARD_TOP_OFFSET + row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE, 10, 10);
+                    g.fillRoundRect(offsetX + col * BLOCK_SIZE, BOARD_TOP_OFFSET + row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE, 8, 8);
                 }
             }
         }
@@ -123,39 +227,33 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         if (!player.isGameOver()) {
             Tetromino piece = player.getCurrentPiece();
             int ghostY = player.getGhostY();
-            g.setColor(new Color(200, 200, 200, 60));
+            g.setColor(new Color(255, 255, 255, 50));
             for (int i = 0; i < piece.getShape().length; i++) {
                 for (int j = 0; j < piece.getShape()[i].length; j++) {
                     if (piece.getShape()[i][j] != 0) {
                         int px = offsetX + (player.getCurrentX() + j) * BLOCK_SIZE;
                         int py = BOARD_TOP_OFFSET + (ghostY + i) * BLOCK_SIZE;
-                        g.fillRoundRect(px, py, BLOCK_SIZE, BLOCK_SIZE, 10, 10);
+                        g.fillRoundRect(px, py, BLOCK_SIZE, BLOCK_SIZE, 8, 8);
                     }
                 }
             }
 
-            Color drawColor = piece.getColor();
-            g.setColor(drawColor);
-
+            g.setColor(piece.getColor());
             for (int i = 0; i < piece.getShape().length; i++) {
                 for (int j = 0; j < piece.getShape()[i].length; j++) {
                     if (piece.getShape()[i][j] != 0) {
                         int px = offsetX + (player.getCurrentX() + j) * BLOCK_SIZE;
                         int py = BOARD_TOP_OFFSET + (player.getCurrentY() + i) * BLOCK_SIZE;
-                        g.fillRoundRect(px, py, BLOCK_SIZE, BLOCK_SIZE, 10, 10);
+                        g.fillRoundRect(px, py, BLOCK_SIZE, BLOCK_SIZE, 8, 8);
                     }
                 }
             }
         }
     }
 
-    @Override
-    public void keyTyped(KeyEvent e) {}
-    @Override
-    public void keyReleased(KeyEvent e) {}
+    @Override public void keyPressed(KeyEvent e) {
+        if (gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver()) return;
 
-    @Override
-    public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
 
         if (key == KeyEvent.VK_A) gameEngine.getPlayer1().movePieceLeft();
@@ -170,4 +268,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
         repaint();
     }
+
+    @Override public void keyTyped(KeyEvent e) {}
+    @Override public void keyReleased(KeyEvent e) {}
 }
