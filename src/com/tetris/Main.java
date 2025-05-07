@@ -1,4 +1,6 @@
-package com.tetris.view;
+package com.tetris;
+
+import com.tetris.view.GamePanel;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;

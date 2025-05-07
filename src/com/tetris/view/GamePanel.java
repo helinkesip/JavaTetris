@@ -76,10 +76,12 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
         restartButton = new JButton("Yeniden Oyna");
         restartButton.setFont(new Font("Verdana", Font.BOLD, 16));
-        restartButton.setBackground(new Color(150, 150, 150));
-        restartButton.setForeground(Color.WHITE);
+        restartButton.setBackground(Color.decode("#D32F2F"));
+        restartButton.setForeground(Color.white);
+        restartButton.setOpaque(true);
         restartButton.setFocusPainted(false);
         restartButton.setVisible(false);
+        restartButton.setBorderPainted(false);
         restartButton.setSize(180, 45);
         restartButton.addActionListener(e -> restartGame());
 
@@ -139,6 +141,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         g2d.fillRect(0, 0, getWidth(), getHeight());
 
         int centerX = getWidth() / 2;
+        int centerY = getHeight() / 2;
         int player1X = centerX - BOARD_WIDTH - MARGIN / 2;
         int player2X = centerX + MARGIN / 2;
 
@@ -149,7 +152,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         drawNextPiece(g2d, gameEngine.getPlayer2().getNextPiece(), player2X + BOARD_WIDTH + 10, BOARD_TOP_OFFSET);
 
         int buttonX = (getWidth() - restartButton.getWidth()) / 2;
-        int buttonY = getHeight() - restartButton.getHeight() - 10;
+        int buttonY = getHeight() - restartButton.getHeight() - 80;
         restartButton.setLocation(buttonX, buttonY);
         restartButton.setVisible(gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver());
 
