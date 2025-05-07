@@ -1,10 +1,9 @@
 package com.tetris;
 
-import com.tetris.utils.GameUtils;
-import com.tetris.model.Tetromino;
 import com.tetris.model.GameBoard;
-
-import java.util.Set;
+import com.tetris.model.Tetromino;
+import com.tetris.utils.GameUtils;
+import com.tetris.utils.MusicPlayer;
 
 public abstract class Player {
     private String name;
@@ -14,12 +13,16 @@ public abstract class Player {
     private Tetromino nextPiece;
     private int currentX, currentY;
     private boolean gameOver = false;
+    private MusicPlayer musicPlayer;
+    private Player otherPlayer; // Diğer oyuncuyu tutacak
 
     public Player(String name, GameBoard board) {
         this.name = name;
         this.board = board;
         this.score = 0;
         this.nextPiece = GameUtils.createRandomTetromino();
+        this.musicPlayer = new MusicPlayer();
+        this.musicPlayer.playMusic("game-music.wav"); // 🎵 Müzik başlat
         spawnNewPiece();
     }
 
@@ -31,7 +34,7 @@ public abstract class Player {
         currentPiece = nextPiece;
         nextPiece = GameUtils.createRandomTetromino();
 
-        switch(currentPiece.getId()) {
+        switch (currentPiece.getId()) {
             case 0:
                 currentX = board.getWidth() / 2 - 2;
                 currentY = 0;
@@ -48,6 +51,8 @@ public abstract class Player {
         if (!board.isValidPosition(currentPiece, currentX, currentY)) {
             System.out.println("Game Over for " + name);
             gameOver = true;
+            musicPlayer.stopMusic(); // ❌ Oyun bittiğinde müziği durdur
+            checkGameOverOrTie(); // Game over ya da tie durumu kontrolü
         }
     }
 
@@ -89,7 +94,8 @@ public abstract class Player {
 
                 if (!board.isValidPosition(currentPiece, newX, currentY)) {
                     newX = currentX;
-                    while (!board.isValidPosition(currentPiece, newX, currentY) && newX < board.getWidth() - currentPiece.getShape()[0].length) {
+                    while (!board.isValidPosition(currentPiece, newX, currentY)
+                            && newX < board.getWidth() - currentPiece.getShape()[0].length) {
                         newX++;
                     }
                 }
@@ -97,12 +103,12 @@ public abstract class Player {
                 if (board.isValidPosition(currentPiece, newX, currentY)) {
                     currentX = newX;
                 } else {
-                    currentPiece.rotate();
+                    currentPiece.rotate(); // 3 kez daha döndürerek eski haline getir
                     currentPiece.rotate();
                     currentPiece.rotate();
                 }
             } else {
-                currentPiece.rotate();
+                currentPiece.rotate(); // 3 kez daha döndürerek eski haline getir
                 currentPiece.rotate();
                 currentPiece.rotate();
             }
@@ -172,6 +178,28 @@ public abstract class Player {
             ghostY++;
         }
         return ghostY;
+    }
+
+    // Müzik geçişlerini kontrol et
+    public void checkGameOverOrTie() {
+        // Eğer her iki oyuncu da game over durumu yaşıyorsa:
+        if (otherPlayer != null && isGameOver() && otherPlayer.isGameOver()) {
+            // Skorları karşılaştır
+            if (this.getScore() == otherPlayer.getScore()) {
+                // Beraberlik durumu
+                musicPlayer.stopMusic(); // Mevcut müziği durdur
+                musicPlayer.playMusic("game-over-tie.wav"); // Beraberlik müziği çal
+            } else {
+                // Kazanan oyuncu
+                musicPlayer.stopMusic();
+                musicPlayer.playMusic("game-over.wav"); // Klasik game over müziği çal
+            }
+        }
+    }
+
+    // Diğer oyuncuyu set et
+    public void setOtherPlayer(Player otherPlayer) {
+        this.otherPlayer = otherPlayer;
     }
 
     public abstract void handleKeyPress(int keyCode);
