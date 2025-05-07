@@ -76,10 +76,12 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
 
         restartButton = new JButton("Yeniden Oyna");
         restartButton.setFont(new Font("Verdana", Font.BOLD, 16));
-        restartButton.setBackground(new Color(150, 150, 150));
-        restartButton.setForeground(Color.WHITE);
+        restartButton.setBackground(Color.decode("#D32F2F"));
+        restartButton.setForeground(Color.white);
+        restartButton.setOpaque(true);
         restartButton.setFocusPainted(false);
         restartButton.setVisible(false);
+        restartButton.setBorderPainted(false);
         restartButton.setSize(180, 45);
         restartButton.addActionListener(e -> restartGame());
 
@@ -149,29 +151,40 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         drawNextPiece(g2d, gameEngine.getPlayer2().getNextPiece(), player2X + BOARD_WIDTH + 10, BOARD_TOP_OFFSET);
 
         int buttonX = (getWidth() - restartButton.getWidth()) / 2;
-        int buttonY = getHeight() - restartButton.getHeight() - 10;
+        int buttonY = getHeight() - restartButton.getHeight() - 80;
         restartButton.setLocation(buttonX, buttonY);
-        restartButton.setVisible(gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver());
+        restartButton.setVisible(gameEnded);
 
-        if ((gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver()) && !gameEnded) {
+        Player p1 = gameEngine.getPlayer1();
+        Player p2 = gameEngine.getPlayer2();
+
+        // ✅ Oyun bitiş kontrolü - sadece bir oyuncunun bile oyunu bitirmesi yeterli
+        if (!gameEnded && (p1.isGameOver() || p2.isGameOver())) {
             gameEnded = true;
 
-            if (gameEngine.getPlayer1().getScore() > gameEngine.getPlayer2().getScore()) {
-                winnerText = gameEngine.getPlayer1().getName() + " Wins!";
-            } else if (gameEngine.getPlayer2().getScore() > gameEngine.getPlayer1().getScore()) {
-                winnerText = gameEngine.getPlayer2().getName() + " Wins!";
+            // Oyunu durdur
+            p1.stopMusic();
+            p2.stopMusic();
+
+            if (p1.getScore() > p2.getScore()) {
+                winnerText = p1.getName() + " Wins!";
+            } else if (p2.getScore() > p1.getScore()) {
+                winnerText = p2.getName() + " Wins!";
             } else {
                 winnerText = "It's a Tie!";
             }
+
+            p1.checkGameOverOrTie(); // müzik çalma burada tetiklenebilir
         }
 
+        // Kazanan/beraberlik yazısı ve konfeti
         if (gameEnded) {
             g2d.setColor(Color.YELLOW);
             g2d.setFont(new Font("Verdana", Font.BOLD, 32));
             int textWidth = g2d.getFontMetrics().stringWidth(winnerText);
             g2d.drawString(winnerText, (getWidth() - textWidth) / 2, getHeight() / 2 + 40);
 
-            // Konfetti animasyonu
+            // Konfeti animasyonu
             for (int i = 0; i < 150; i++) {
                 int x = (int) (Math.random() * getWidth());
                 int y = (int) (Math.random() * getHeight());
@@ -184,6 +197,21 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
                 g2d.fillOval(x, y, size, size);
             }
         }
+    }
+
+
+
+
+    private boolean isPlayerTwoWins() {
+        return gameEngine.getPlayer2().getScore() > gameEngine.getPlayer1().getScore() || gameEngine.getPlayer1().isGameOver() && !gameEngine.getPlayer2().isGameOver();
+    }
+
+    private boolean isPlayerOneWins() {
+        return gameEngine.getPlayer1().getScore() > gameEngine.getPlayer2().getScore() || gameEngine.getPlayer2().isGameOver() && !gameEngine.getPlayer1().isGameOver();
+    }
+
+    private boolean checkEquality() {
+        return gameEngine.getPlayer2().isGameOver() && gameEngine.getPlayer1().isGameOver() && gameEngine.getPlayer2().getScore() == gameEngine.getPlayer1().getScore();
     }
 
 

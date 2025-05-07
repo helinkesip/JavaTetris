@@ -18,11 +18,9 @@ public class MusicPlayer {
 
         try {
             AudioInputStream audioStream = AudioSystem.getAudioInputStream(resource);
-
             clip = AudioSystem.getClip();
             clip.open(audioStream);
             clip.loop(Clip.LOOP_CONTINUOUSLY);
-
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -33,5 +31,22 @@ public class MusicPlayer {
             clip.stop();
         }
     }
-}
 
+    // Tek seferlik müzik çalma metodu
+    public void playOnce(String musicFile) {
+        URL resource = getClass().getResource("/com/tetris/sounds/" + musicFile);
+        if (resource == null) {
+            System.err.println("Could not find music file: " + musicFile);
+            return;
+        }
+
+        try {
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(resource);
+            Clip tempClip = AudioSystem.getClip();
+            tempClip.open(audioStream);
+            tempClip.start(); // sadece bir kez çal
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+}

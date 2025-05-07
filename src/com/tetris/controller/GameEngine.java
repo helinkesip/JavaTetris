@@ -1,16 +1,13 @@
 package com.tetris.controller;
 
-import com.tetris.controller.PlayerOne;
-import com.tetris.controller.PlayerTwo;
-import com.tetris.model.GameBoard;
 import com.tetris.view.GamePanel;
 import com.tetris.Player;
 
 import java.util.Set;
 
 public class GameEngine {
-    private Player player1;
-    private Player player2;
+    private final Player player1;
+    private final Player player2;
     private GamePanel panel;
 
     public GameEngine(Player player1, Player player2) {
