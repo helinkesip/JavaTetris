@@ -28,6 +28,9 @@ public abstract class Player {
     }
 
     public void spawnNewPiece() {
+        if (this.isGameOver() || (this.otherPlayer != null && this.otherPlayer.isGameOver())) {
+            return; //herhangi bir player için oyun bittiyse yeni parca uretmesin
+        }
         currentPiece = nextPiece;
         nextPiece = GameUtils.createRandomTetromino();
 
@@ -49,7 +52,6 @@ public abstract class Player {
             System.out.println("Game Over for " + name);
             gameOver = true;
             musicPlayer.stopMusic();
-            checkGameOverOrTie();
         }
     }
 
@@ -189,21 +191,23 @@ public abstract class Player {
 
     // Müzik geçişlerini kontrol et
     public void checkGameOverOrTie() {
-        // Eğer diğer oyuncu henüz ayarlanmamışsa, bekle
         if (otherPlayer == null) {
             System.err.println("Bekleyen diğer oyuncu yok. Oyun sonu veya beraberlik kontrolü atlandı.");
             return;
         }
-        if (isGameOver() && otherPlayer.isGameOver()) {
-            // Skorları karşılaştır
-            if (this.getScore() == otherPlayer.getScore()) {
-                // Beraberlik durumu
-                musicPlayer.stopMusic();
-                musicPlayer.playMusic("game-over-tie.wav");
-            } else {
-                // Kazanan oyuncu
+        if (isGameOver() || otherPlayer.isGameOver()) {
+            if (otherPlayer.isGameOver() && !isGameOver()) {
                 musicPlayer.stopMusic();
                 musicPlayer.playMusic("game-win.wav");
+            } else if (!otherPlayer.isGameOver() && isGameOver()) {
+                musicPlayer.stopMusic();
+                musicPlayer.playMusic("wah-wah-sad.wav");
+            } else if (otherPlayer.isGameOver() && isGameOver()) {
+                if (this.getScore() == otherPlayer.getScore()) {
+                    // Beraberlik durumu
+                    musicPlayer.stopMusic();
+                    musicPlayer.playMusic("game-over-tie.wav");
+                }
             }
         }
 

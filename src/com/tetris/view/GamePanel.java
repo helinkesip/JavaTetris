@@ -156,13 +156,16 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         if ((gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver()) && !gameEnded) {
             gameEnded = true;
 
-            if (gameEngine.getPlayer1().getScore() > gameEngine.getPlayer2().getScore()) {
+            if (isPlayerOneWins()) {
                 winnerText = gameEngine.getPlayer1().getName() + " Wins!";
-            } else if (gameEngine.getPlayer2().getScore() > gameEngine.getPlayer1().getScore()) {
+            } else if (isPlayerTwoWins()) {
                 winnerText = gameEngine.getPlayer2().getName() + " Wins!";
-            } else {
+            } else if (checkEquality()) {
                 winnerText = "It's a Tie!";
             }
+            gameEngine.getPlayer1().stopMusic();
+            gameEngine.getPlayer2().stopMusic();
+            gameEngine.getPlayer1().checkGameOverOrTie();
         }
 
         if (gameEnded) {
@@ -184,6 +187,18 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
                 g2d.fillOval(x, y, size, size);
             }
         }
+    }
+
+    private boolean isPlayerTwoWins() {
+        return gameEngine.getPlayer2().getScore() > gameEngine.getPlayer1().getScore() || gameEngine.getPlayer1().isGameOver() && !gameEngine.getPlayer2().isGameOver();
+    }
+
+    private boolean isPlayerOneWins() {
+        return gameEngine.getPlayer1().getScore() > gameEngine.getPlayer2().getScore() || gameEngine.getPlayer2().isGameOver() && !gameEngine.getPlayer1().isGameOver();
+    }
+
+    private boolean checkEquality() {
+        return gameEngine.getPlayer2().isGameOver() && gameEngine.getPlayer1().isGameOver() && gameEngine.getPlayer2().getScore() == gameEngine.getPlayer1().getScore();
     }
 
 
