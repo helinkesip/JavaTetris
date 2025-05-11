@@ -10,7 +10,7 @@ public class GameEngine {
     private final Player player2;
     private GamePanel panel;
 
-    public GameEngine(Player player1, Player player2) {
+    public GameEngine(Player player1, Player player2) { //Oyuncular birbirine referans verilir, rakip olarak görünür
         this.player1 = player1;
         this.player2 = player2;
         player1.setOtherPlayer(player2);
@@ -24,11 +24,11 @@ public class GameEngine {
     public void updateGame() {
         Player[] players = { player1, player2 };
         for (Player player : players) {
-            player.movePieceDown();
-            Set<Integer> cleared = player.getBoard().clearLines();
-            player.addScore(cleared.size() * 100);
+            player.movePieceDown(); //Parçayı aşağı hareket ettirir
+            Set<Integer> cleared = player.getBoard().clearLines(); //Tamamlanan satırı temizler
+            player.addScore(cleared.size() * 100); //Temizlenen satır için 100 puan eklendi
             if (!cleared.isEmpty() && panel != null) {
-                panel.triggerRowAnimation(cleared);
+                panel.triggerRowAnimation(cleared);  //Satır temizleme animasyonu
             }
         }
     }

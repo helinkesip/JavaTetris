@@ -3,7 +3,7 @@ package com.tetris.model;
 import java.awt.Color;
 
 public class Tetromino {
-    public static final int[][][] SHAPES = {
+    public static final int[][][] SHAPES = {  //Şekiller 3 boyutlu dizi olarak ayarlanır
             {{1, 1, 1, 1}},                // I
             {{1, 1}, {1, 1}},              // O
             {{0, 1, 0}, {1, 1, 1}},        // T
@@ -13,7 +13,7 @@ public class Tetromino {
             {{1, 1, 0}, {0, 1, 1}}         // Z
     };
 
-    public static final Color[] COLORS = {
+    public static final Color[] COLORS = { //Herbir şekil için özel renk tanımlanır
             new Color(255, 170, 170), // I
             new Color(255, 255, 170), // O
             new Color(170, 255, 170), // T
@@ -27,18 +27,13 @@ public class Tetromino {
     private Color color;
     private int id;
 
-    public Tetromino(int[][] shape, Color color, int id) {
+    public Tetromino(int[][] shape, Color color, int id) {  //Nesne oluştururularak şekil, renk, kimlik bilgileri alınır
         this.shape = shape;
         this.color = color;
         this.id = id;
     }
 
-    public static Tetromino createRandomTetromino() {
-        int index = (int)(Math.random() * SHAPES.length);
-        return new Tetromino(SHAPES[index], COLORS[index], index + 1); // id = 1 to 7
-    }
-
-    public void rotate() {
+    public void rotate() { //Tetromino saat yönünde 90 derece döndürülür
         int row = shape.length;
         int col = shape[0].length;
         int[][] rotated = new int[col][row];
@@ -50,7 +45,7 @@ public class Tetromino {
         shape = rotated;
     }
 
-    public int[][] getShape() {
+    public int[][] getShape() {  //getter metotları ile özelliklere erişim sağlandı
         return shape;
     }
 

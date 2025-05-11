@@ -14,12 +14,12 @@ public abstract class Player {
     private int currentX, currentY;
     private boolean gameOver = false;
     private final MusicPlayer musicPlayer;
-    private Player otherPlayer; // Diğer oyuncuyu tutacak
+    private Player otherPlayer;
 
     public Player(String name, GameBoard board) {
         this.name = name;
         this.board = board;
-        this.score = 0;
+        this.score = 0; //Başlangıç puanı 0
         this.nextPiece = GameUtils.createRandomTetromino();
         this.musicPlayer = new MusicPlayer();
         this.musicPlayer.stopMusic();
@@ -28,34 +28,39 @@ public abstract class Player {
     }
 
     public void spawnNewPiece() {
-        if (this.isGameOver() || (this.otherPlayer != null && this.otherPlayer.isGameOver())) {
-            return; //herhangi bir player için oyun bittiyse yeni parca uretmesin
-        }
-        currentPiece = nextPiece;
-        nextPiece = GameUtils.createRandomTetromino();
+        if (this.isGameOver()) return;
 
-        switch (currentPiece.getId()) {
-            case 0:
+        currentPiece = nextPiece; //Mevcut parça sonraki parça olur
+        nextPiece = GameUtils.createRandomTetromino(); //Yeni rastgele parça
+
+        switch (currentPiece.getId()) {  //Parça tipine göre başlangıç konumu belirlenir
+            case 0 -> {
                 currentX = board.getWidth() / 2 - 2;
                 currentY = 0;
-                break;
-            case 1:
+            }
+            case 1 -> {
                 currentX = board.getWidth() / 2 - 1;
                 currentY = 0;
-                break;
-            default:
+            }
+            default -> {
                 currentX = board.getWidth() / 2 - currentPiece.getShape()[0].length / 2;
                 currentY = 0;
+            }
         }
 
         if (!board.isValidPosition(currentPiece, currentX, currentY)) {
             System.out.println("Game Over for " + name);
             gameOver = true;
             musicPlayer.stopMusic();
+
+            if (otherPlayer != null) {
+                this.checkGameOverOrTie();
+                otherPlayer.checkGameOverOrTie();
+            }
         }
     }
 
-    public void movePieceDown() {
+    public void movePieceDown() {  //Aşağı hareket kontrolu
         if (gameOver) return;
         if (board.isValidPosition(currentPiece, currentX, currentY + 1)) {
             currentY++;
@@ -65,14 +70,14 @@ public abstract class Player {
         }
     }
 
-    public void movePieceLeft() {
+    public void movePieceLeft() { //Sol hareket kontrolu
         if (gameOver) return;
         if (board.isValidPosition(currentPiece, currentX - 1, currentY)) {
             currentX--;
         }
     }
 
-    public void movePieceRight() {
+    public void movePieceRight() { //Sağ hareket kontrolu
         if (gameOver) return;
         if (board.isValidPosition(currentPiece, currentX + 1, currentY)) {
             currentX++;
@@ -84,33 +89,9 @@ public abstract class Player {
         currentPiece.rotate();
 
         if (!board.isValidPosition(currentPiece, currentX, currentY)) {
-            if (currentPiece.getId() == 0) {
-                int newX = currentX;
-
-                while (!board.isValidPosition(currentPiece, newX, currentY) && newX > 0) {
-                    newX--;
-                }
-
-                if (!board.isValidPosition(currentPiece, newX, currentY)) {
-                    newX = currentX;
-                    while (!board.isValidPosition(currentPiece, newX, currentY)
-                            && newX < board.getWidth() - currentPiece.getShape()[0].length) {
-                        newX++;
-                    }
-                }
-
-                if (board.isValidPosition(currentPiece, newX, currentY)) {
-                    currentX = newX;
-                } else {
-                    currentPiece.rotate(); // 3 kez daha döndürerek eski haline getir
-                    currentPiece.rotate();
-                    currentPiece.rotate();
-                }
-            } else {
-                currentPiece.rotate(); // 3 kez daha döndürerek eski haline getir
-                currentPiece.rotate();
-                currentPiece.rotate();
-            }
+            currentPiece.rotate();
+            currentPiece.rotate();
+            currentPiece.rotate();
         }
     }
 
@@ -122,13 +103,8 @@ public abstract class Player {
                     int newX = x + j;
                     int newY = y + i;
 
-                    if (newX < 0 || newX >= board.getWidth() || newY >= board.getHeight()) {
-                        return false;
-                    }
-
-                    if (newY >= 0 && board.getBoard()[newY][newX] != 0) {
-                        return false;
-                    }
+                    if (newX < 0 || newX >= board.getWidth() || newY >= board.getHeight()) return false;  //Tahta sınırları içinde mi kontrol
+                    if (newY >= 0 && board.getBoard()[newY][newX] != 0) return false; //Diğer parçalarla çarpışıyor mu kontrol
                 }
             }
         }
@@ -140,9 +116,7 @@ public abstract class Player {
     }
 
     public void stopMusic() {
-        if (musicPlayer != null) {
-            musicPlayer.stopMusic();
-        }
+        if (musicPlayer != null) musicPlayer.stopMusic();
     }
 
     public void addScore(int value) {
@@ -189,30 +163,25 @@ public abstract class Player {
         return ghostY;
     }
 
-    // Müzik geçişlerini kontrol et
-    public void checkGameOverOrTie() {
-        if (otherPlayer == null) {
-            System.err.println("Bekleyen diğer oyuncu yok. Oyun sonu veya beraberlik kontrolü atlandı.");
-            return;
-        }
-        if (isGameOver() || otherPlayer.isGameOver()) {
-            if (otherPlayer.isGameOver() && !isGameOver()) {
-                musicPlayer.stopMusic();
-                musicPlayer.playMusic("game-win.wav");
-            } else if (!otherPlayer.isGameOver() && isGameOver()) {
-                musicPlayer.stopMusic();
-                musicPlayer.playMusic("wah-wah-sad.wav");
-            } else if (otherPlayer.isGameOver() && isGameOver()) {
-                if (this.getScore() == otherPlayer.getScore()) {
-                    // Beraberlik durumu
-                    musicPlayer.stopMusic();
-                    musicPlayer.playMusic("game-over-tie.wav");
-                }
-            }
-        }
+    public void checkGameOverOrTie() {  //Kazanma durumlarında çalınacak müzikler
+        if (otherPlayer == null) return;
+        if (!this.isGameOver() && !otherPlayer.isGameOver()) return;
 
+        musicPlayer.stopMusic();
+
+        if (this.getScore() == otherPlayer.getScore()) {
+            System.out.println("🔔 Beraberlik! Skor: " + score);
+            musicPlayer.playMusic("game-over-tie.wav");
+        } else if (this.getScore() > otherPlayer.getScore()) {
+            System.out.println("🏆 " + name + " kazandı!");
+            musicPlayer.playMusic("game-win.wav");
+            musicPlayer.playOnce("cheering.wav");
+        } else {
+            System.out.println("🏆 " + otherPlayer.getName() + " kazandı!");
+            musicPlayer.playMusic("game-win.wav");
+            musicPlayer.playOnce("cheering.wav");
+        }
     }
 
     public abstract void handleKeyPress(int keyCode);
-
 }

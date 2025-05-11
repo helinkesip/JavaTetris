@@ -74,7 +74,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         animationTimer = new Timer(120, this);
         animationTimer.start();
 
-        restartButton = new JButton("Yeniden Oyna");
+        restartButton = new JButton("Yeniden Oyna");  //Yeniden oyna butonu için özellikler
         restartButton.setFont(new Font("Verdana", Font.BOLD, 16));
         restartButton.setBackground(Color.decode("#D32F2F"));
         restartButton.setForeground(Color.white);
@@ -89,7 +89,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         add(restartButton);
     }
 
-    public void triggerRowAnimation(Set<Integer> rows) {
+    public void triggerRowAnimation(Set<Integer> rows) {  //Satır temizleme animasyonu başlatır
         animatingRows.clear();
         animatingRows.addAll(rows);
         animationStep = 0;
@@ -99,16 +99,16 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         gameEnded = false;
         winnerText = "";
         stopMusicIfEngineIsValid();
-        GameBoard board1 = new GameBoard();
+        GameBoard board1 = new GameBoard(); //Yeni tahtalar oluşturur
         GameBoard board2 = new GameBoard();
 
-        Player player1 = new PlayerOne(this.player1.getName(), board1);
+        Player player1 = new PlayerOne(this.player1.getName(), board1); //Yeni oyuncular oluşturur
         Player player2 = new PlayerTwo(this.player2.getName(), board2);
 
         gameEngine = new GameEngine(player1, player2);
         gameEngine.setGamePanel(this);
 
-        restartButton.setVisible(false);
+        restartButton.setVisible(false); //Başlangıçta gizli
         requestFocusInWindow();
         repaint();
     }
@@ -141,7 +141,6 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         g2d.fillRect(0, 0, getWidth(), getHeight());
 
         int centerX = getWidth() / 2;
-        int centerY = getHeight() / 2;
         int player1X = centerX - BOARD_WIDTH - MARGIN / 2;
         int player2X = centerX + MARGIN / 2;
 
@@ -154,21 +153,27 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         int buttonX = (getWidth() - restartButton.getWidth()) / 2;
         int buttonY = getHeight() - restartButton.getHeight() - 80;
         restartButton.setLocation(buttonX, buttonY);
-        restartButton.setVisible(gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver());
+        restartButton.setVisible(gameEnded);
 
-        if ((gameEngine.getPlayer1().isGameOver() || gameEngine.getPlayer2().isGameOver()) && !gameEnded) {
+        Player p1 = gameEngine.getPlayer1();
+        Player p2 = gameEngine.getPlayer2();
+
+
+        if (!gameEnded && (p1.isGameOver() || p2.isGameOver())) { //Puan hesaplayarak kazananı belirleme
             gameEnded = true;
 
-            if (isPlayerOneWins()) {
-                winnerText = gameEngine.getPlayer1().getName() + " Wins!";
-            } else if (isPlayerTwoWins()) {
-                winnerText = gameEngine.getPlayer2().getName() + " Wins!";
-            } else if (checkEquality()) {
+            p1.stopMusic();
+            p2.stopMusic();
+
+            if (p1.getScore() > p2.getScore()) {
+                winnerText = p1.getName() + " Wins!";
+            } else if (p2.getScore() > p1.getScore()) {
+                winnerText = p2.getName() + " Wins!";
+            } else {
                 winnerText = "It's a Tie!";
             }
-            gameEngine.getPlayer1().stopMusic();
-            gameEngine.getPlayer2().stopMusic();
-            gameEngine.getPlayer1().checkGameOverOrTie();
+
+            p1.checkGameOverOrTie();
         }
 
         if (gameEnded) {
@@ -177,7 +182,6 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
             int textWidth = g2d.getFontMetrics().stringWidth(winnerText);
             g2d.drawString(winnerText, (getWidth() - textWidth) / 2, getHeight() / 2 + 40);
 
-            // Konfetti animasyonu
             for (int i = 0; i < 150; i++) {
                 int x = (int) (Math.random() * getWidth());
                 int y = (int) (Math.random() * getHeight());
@@ -192,17 +196,8 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
         }
     }
 
-    private boolean isPlayerTwoWins() {
-        return gameEngine.getPlayer2().getScore() > gameEngine.getPlayer1().getScore() || gameEngine.getPlayer1().isGameOver() && !gameEngine.getPlayer2().isGameOver();
-    }
 
-    private boolean isPlayerOneWins() {
-        return gameEngine.getPlayer1().getScore() > gameEngine.getPlayer2().getScore() || gameEngine.getPlayer2().isGameOver() && !gameEngine.getPlayer1().isGameOver();
-    }
 
-    private boolean checkEquality() {
-        return gameEngine.getPlayer2().isGameOver() && gameEngine.getPlayer1().isGameOver() && gameEngine.getPlayer2().getScore() == gameEngine.getPlayer1().getScore();
-    }
 
 
     private void drawNextPiece(Graphics2D g, Tetromino piece, int x, int y) {

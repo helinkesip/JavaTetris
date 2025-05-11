@@ -8,13 +8,13 @@ public class GameBoard {
     public static final int WIDTH = 10;
     public static final int HEIGHT = 20;
 
-    private int[][] board;
+    private int[][] board;  //Oyun tahtasını temsil eden 2 boyutlu dizi
 
     public GameBoard() {
-        board = new int[HEIGHT][WIDTH];
+        board = new int[HEIGHT][WIDTH];  //Yeni boş oyun tahtası oluşturuldu
     }
 
-    public boolean isValidPosition(Tetromino tetromino, int x, int y) {
+    public boolean isValidPosition(Tetromino tetromino, int x, int y) {  //Sınırlar ve çarpışmalar kontrol edildi
         int[][] shape = tetromino.getShape();
         for (int i = 0; i < shape.length; i++) {
             for (int j = 0; j < shape[i].length; j++) {
@@ -31,9 +31,9 @@ public class GameBoard {
         return true;
     }
 
-    public void mergePiece(Tetromino tetromino, int x, int y) {
+    public void mergePiece(Tetromino tetromino, int x, int y) {  //Tetrominoyu oyun tahtasına yerleştirir
         int[][] shape = tetromino.getShape();
-        int id = tetromino.getId(); // sabit renk için id
+        int id = tetromino.getId();
         for (int i = 0; i < shape.length; i++) {
             for (int j = 0; j < shape[i].length; j++) {
                 if (shape[i][j] != 0) {
@@ -49,8 +49,8 @@ public class GameBoard {
 
 
     public Set<Integer> clearLines() {
-        Set<Integer> cleared = new HashSet<>();
-        for (int row = HEIGHT - 1; row >= 0; row--) {
+        Set<Integer> cleared = new HashSet<>();  //Temizlenen satırın indexini tutan set
+        for (int row = HEIGHT - 1; row >= 0; row--) { //Aşağıdan yukarıya satırları kontrol ederek dolu satırı tespit edip temizler
             boolean full = true;
             for (int col = 0; col < WIDTH; col++) {
                 if (board[row][col] == 0) {
